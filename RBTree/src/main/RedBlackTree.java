@@ -108,6 +108,10 @@ public class RedBlackTree <K extends Comparable<K>, V> {
             Node grandParent = node.parent.parent;
             Node parent = node.parent;
 
+            if(grandParent == null){
+                break;
+            }
+
             Node uncleNode = null;
             if(node.parent == grandParent.left){
                 uncleNode = grandParent.right;
@@ -121,27 +125,30 @@ public class RedBlackTree <K extends Comparable<K>, V> {
                         rightRotate(grandParent);
                         parent.color = BLACK;
                         grandParent.color = RED;
+                        break;
                     }else{
                         leftRotate(node.parent);
                         rightRotate(grandParent);
                         node.color = BLACK;
                         grandParent.color = RED;
-                        parent.color = BLACK;
+                        parent.color = RED;
+                        break;
                     }
                 }else{
                     if(node == node.parent.right){
                         leftRotate(grandParent);
                         parent.color = BLACK;
                         grandParent.color = RED;
+                        break;
                     } else {
                         rightRotate(node.parent);
                         leftRotate(grandParent);
                         node.color = BLACK;
                         parent.color = RED;
                         grandParent.color = RED;
+                        break;
                     }
                 }
-                node = node.parent;
             } else if (uncleNode.color == RED) {
                 uncleNode.color = BLACK;
                 node.parent.color = BLACK;
@@ -170,11 +177,19 @@ public class RedBlackTree <K extends Comparable<K>, V> {
     }
 
     public V get(K key) {
-        return BSTsearchNode(rootNode, key).value;
+        Node n = BSTsearchNode(rootNode, key);
+        if (n == null) {
+            return null;
+        }
+        return n.value;
     }
 
     public Boolean getColor(K key){
-        return BSTsearchNode(rootNode, key).color;
+        Node n = BSTsearchNode(rootNode, key);
+        if (n == null){
+            return null;
+        }
+        return n.color;
     }
 
     public List<List<V>> levelOrderTravelValue(){
