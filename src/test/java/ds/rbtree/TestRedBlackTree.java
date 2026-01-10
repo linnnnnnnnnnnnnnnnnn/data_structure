@@ -1,4 +1,4 @@
-package src.main;
+package ds.rbtree;
 
 import java.util.*;
 
@@ -162,12 +162,6 @@ public class TestRedBlackTree {
         assertValid(t, "delete descending final");
     }
 
-    /**
-     * 随机压力：用 TreeMap 当真值
-     * - 随机插入不重复 key
-     * - 随机删除一部分 key
-     * - 期间持续比对 get() 结果 + validateRBTree()
-     */
     private static void testDeleteRandomStressAgainstTreeMap() {
         for (int round = 1; round <= 20; round++) {
             RedBlackTree<Integer, Integer> t = new RedBlackTree<>();
