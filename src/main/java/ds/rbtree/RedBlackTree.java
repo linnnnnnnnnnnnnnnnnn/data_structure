@@ -1,4 +1,4 @@
-package src.main;
+package ds.rbtree;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
