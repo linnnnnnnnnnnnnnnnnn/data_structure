@@ -12,13 +12,13 @@ public class HashTable <K, V>{
     private static final int UNTREEIFY_THRESHOLD = 6;
     private static final int MIN_TREEIFY_CAPACITY = 64;
     
-    private static class HashNode <K, V> {
+    private static class Node <K, V> {
         final int hash;
         final K key;
         V value;
-        HashNode<K,V> next;
+        Node<K,V> next;
 
-        HashNode(int hash, K key, V value, HashNode<K,V> next){
+        Node(int hash, K key, V value, Node<K,V> next){
             this.hash = hash;
             this.key = key;
             this.value = value;
@@ -26,7 +26,17 @@ public class HashTable <K, V>{
         }
     }
 
-    private HashNode<K,V>[] buckets;
+    static final class TreeNode<K,V> extends Node<K,V> {
+        TreeNode<K,V> parent, left, right, prev;
+        boolean red;
+
+        TreeNode(int hash, K key, V value, Node<K,V> next) {
+            super(hash, key, value, next);
+        }
+    }
+
+
+    private Node<K,V>[] buckets;
 
     public HashTable(){
         init(DEFAULT_CAPACITY);
@@ -40,7 +50,7 @@ public class HashTable <K, V>{
         size = 0;
         this.capacity = capacity;
         threshold = (int)(capacity*LOAD_FACTOR);
-        buckets = (HashNode<K,V>[]) new HashNode[capacity];
+        buckets = (Node<K,V>[]) new Node[capacity];
     }
 
     private void addSize(){
@@ -62,9 +72,9 @@ public class HashTable <K, V>{
         return hash&(capacity - 1);
     }
 
-    private void insertToBucket(HashNode<K,V> node){
+    private void insertToBucket(Node<K,V> node){
         int index = computeBucketIndex(node.hash);
-        HashNode<K,V> iterator = buckets[index];
+        Node<K,V> iterator = buckets[index];
         if(iterator == null){
             buckets[index] = node;
             return;
@@ -82,7 +92,7 @@ public class HashTable <K, V>{
     }
 
     private boolean NeedTreeify(int length){
-        if(length > TREEIFY_THRESHOLD && size > MIN_TREEIFY_CAPACITY){
+        if(length > TREEIFY_THRESHOLD && capacity > MIN_TREEIFY_CAPACITY){
             return true;
         }else{
             return false;
@@ -107,15 +117,15 @@ public class HashTable <K, V>{
 
     public void insert(K key, V value){
         int hash = computeHash(key);
-        HashNode<K,V> NodeToInsert = new HashNode<K,V>(hash, key, value, null);
+        Node<K,V> NodeToInsert = new Node<K,V>(hash, key, value, null);
         addSize();
         insertToBucket(NodeToInsert);
     }
 
-    private HashNode<K,V> selectNode(K key){
+    private Node<K,V> selectNode(K key){
         int hash = computeHash(key);
         int index = computeBucketIndex(hash);
-        HashNode<K,V> iterator = buckets[index];
+        Node<K,V> iterator = buckets[index];
         while(iterator != null){
             if(iterator.hash == hash && iterator.key.equals(key)){
                 return iterator;
@@ -127,18 +137,16 @@ public class HashTable <K, V>{
     }
 
     public V get(K key){
-        HashNode<K,V> node = selectNode(key);
+        Node<K,V> node = selectNode(key);
         if(node == null){
             return null;
         }
         return node.value;
     }
 
-    public boolean delete(K key){
-        int hash = computeHash(key);
-        int index = computeBucketIndex(hash);
-        HashNode<K,V> iterator = buckets[index];
-        HashNode<K,V> parent = null;
+    private boolean deleteListNode(K key, int hash, int index){
+        Node<K,V> iterator = buckets[index];
+        Node<K,V> parent = null;
         while(iterator != null){
             if(iterator.hash == hash && iterator.key.equals(key)){
                 if(parent != null){
@@ -147,10 +155,6 @@ public class HashTable <K, V>{
                     buckets[index] = iterator.next;
                 }
                 reduceSize();
-                // to be implement 
-                if(NeedUnTreeify(size)){
-                    untreeify();
-                }
                 return true;
             }else{
                 parent = iterator;
@@ -159,14 +163,20 @@ public class HashTable <K, V>{
         }
         return false;
     }
+    
+    public boolean delete(K key){
+        int hash = computeHash(key);
+        int index = computeBucketIndex(hash);
+        return deleteListNode(key, hash, index);
+    }
 
     private void resize(){
         int old_cap = capacity;
         capacity = capacity << 1;
         threshold = threshold << 1;
-        HashNode<K, V>[] new_buckets = (HashNode<K, V>[])new HashNode[capacity];
+        Node<K, V>[] new_buckets = (Node<K, V>[])new Node[capacity];
         for(int i = 0; i < old_cap; i++){
-            HashNode<K,V> iter = buckets[i];
+            Node<K,V> iter = buckets[i];
 
             if(iter == null){
                 continue;
@@ -177,8 +187,8 @@ public class HashTable <K, V>{
                 new_buckets[index] = iter;
                 continue;
             }
-            HashNode<K,V> lo_head = null, lo_tail = null;
-            HashNode<K,V> hi_head = null, hi_tail = null;
+            Node<K,V> lo_head = null, lo_tail = null;
+            Node<K,V> hi_head = null, hi_tail = null;
             while(iter != null){
                 if((iter.hash&old_cap) == 0){
                     if(lo_head == null){
@@ -205,9 +215,7 @@ public class HashTable <K, V>{
                 hi_tail.next = null;
                 new_buckets[i + old_cap] = hi_head;
             }
-
         }
-
         buckets = new_buckets;
     }
 }   
