@@ -9,7 +9,6 @@ public class HashTable <K, V>{
     private static final float LOAD_FACTOR = 0.75f;
     private int threshold;
     private static final int TREEIFY_THRESHOLD = 8;
-    private static final int UNTREEIFY_THRESHOLD = 6;
     private static final int MIN_TREEIFY_CAPACITY = 64;
     
     private static class Node <K, V> {
@@ -99,20 +98,23 @@ public class HashTable <K, V>{
         }
     }
 
-    private boolean NeedUnTreeify(int length){
-        if(length < UNTREEIFY_THRESHOLD){
-            return true;
-        }else{
-            return false;
+    private boolean NeedUnTreeify(K key, int hash, int index){
+        // private static final int UNTREEIFY_THRESHOLD = 6;
+        if(buckets[index] instanceof TreeNode){
+            TreeNode<K,V> root = (TreeNode<K,V>)buckets[index];
+            if(root == null || root.left == null || root.right == null || root.left.left == null){
+                return true;
+            }
         }
+        return false;
     }
 
     private void treeify(){
 
     }
 
-    private void untreeify(){
-
+    private void untreeify(TreeNode<K,V> root){
+        
     }
 
     public void insert(K key, V value){
@@ -145,6 +147,9 @@ public class HashTable <K, V>{
     }
 
     private boolean deleteListNode(K key, int hash, int index){
+        if(buckets[index] instanceof TreeNode){
+            return false;
+        }
         Node<K,V> iterator = buckets[index];
         Node<K,V> parent = null;
         while(iterator != null){
@@ -164,10 +169,28 @@ public class HashTable <K, V>{
         return false;
     }
     
+    private boolean deleteTreeNode(K key, int hash, int index){
+        if(buckets[index] instanceof TreeNode){
+            TreeNode<K,V> root = (TreeNode<K,V>)buckets[index];
+
+            // todo: finish delete logic
+
+            if(NeedUnTreeify(key, hash, index)){
+                untreeify(root);
+            }
+        }
+        return false;
+    }
+
+
     public boolean delete(K key){
         int hash = computeHash(key);
         int index = computeBucketIndex(hash);
-        return deleteListNode(key, hash, index);
+        if(buckets[index] instanceof TreeNode){
+            return deleteTreeNode(key, hash, index);
+        } else {
+            return deleteListNode(key, hash, index);
+        }
     }
 
     private void resize(){
