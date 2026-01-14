@@ -1,6 +1,6 @@
 package ds.hashtable;
 
-public class HashTable<K, V> {
+public class ListHashTable<K,V> extends HashTable<K,V> {
     private int size;
 
     private int capacity;
@@ -37,11 +37,11 @@ public class HashTable<K, V> {
 
     private Node<K, V>[] buckets;
 
-    public HashTable() {
+    public ListHashTable() {
         init(DEFAULT_CAPACITY);
     }
 
-    public HashTable(int capacity) {
+    public ListHashTable(int capacity) {
         init(capacity);
     }
 
@@ -92,90 +92,15 @@ public class HashTable<K, V> {
     }
 
     private boolean NeedTreeify(int length) {
-        return length > TREEIFY_THRESHOLD && capacity > MIN_TREEIFY_CAPACITY;
+        return false;
     }
 
     private boolean NeedUnTreeify(K key, int hash, int index) {
-        if (!(buckets[index] instanceof TreeNode)) {
-            return false;
-        }
-        int count = 0;
-        Node<K, V> iter = buckets[index];
-        while (iter != null) {
-            count++;
-            if (count > UNTREEIFY_THRESHOLD) {
-                return false;
-            }
-            iter = iter.next;
-        }
-        return true;
+        return false;
     }
 
-    /**
-     * Convert a bucket's linked list to a red-black tree when it becomes too large.
-     * This is a simplified variant of JDK HashMap's treeification logic.
-     */
     private void treeify(int index) {
-        Node<K, V> head = buckets[index];
-        if (head == null || head instanceof TreeNode) {
-            return;
-        }
-        // If table is too small, resize instead of treeifying (like JDK).
-        if (capacity < MIN_TREEIFY_CAPACITY) {
-            resize();
-            return;
-        }
-
-        // Convert list nodes to TreeNodes while keeping a linked list (via next/prev) for iteration.
-        TreeNode<K, V> tHead = null;
-        TreeNode<K, V> tTail = null;
-
-        for (Node<K, V> e = head; e != null; e = e.next) {
-            TreeNode<K, V> p = new TreeNode<>(e.hash, e.key, e.value, null);
-            if (tTail == null) {
-                tHead = p;
-            } else {
-                tTail.next = p;
-                p.prev = tTail;
-            }
-            tTail = p;
-        }
-
-        // Build red-black tree from the TreeNode list.
-        TreeNode<K, V> root = null;
-        for (TreeNode<K, V> x = tHead; x != null; x = (TreeNode<K, V>) x.next) {
-            x.left = x.right = x.parent = null;
-            x.red = true;
-
-            if (root == null) {
-                root = x;
-                root.red = false;
-            } else {
-                TreeNode<K, V> p = root;
-                TreeNode<K, V> parent;
-                int dir;
-                do {
-                    parent = p;
-                    dir = compareTreeNode(x.hash, x.key, p.hash, p.key);
-                    if (dir < 0) {
-                        p = p.left;
-                    } else {
-                        p = p.right;
-                    }
-                } while (p != null);
-
-                x.parent = parent;
-                if (dir < 0) {
-                    parent.left = x;
-                } else {
-                    parent.right = x;
-                }
-                root = balanceInsertion(root, x);
-            }
-        }
-
-        // Store the TreeNode head into the bucket. (Root can be reached by walking parents.)
-        buckets[index] = tHead;
+        return;
     }
 
     /**
@@ -184,24 +109,7 @@ public class HashTable<K, V> {
      * @param head A TreeNode in this bucket (typically buckets[index]).
      */
     private void untreeify(TreeNode<K, V> head) {
-        if (head == null) {
-            return;
-        }
-        int index = computeBucketIndex(head.hash);
 
-        Node<K, V> newHead = null;
-        Node<K, V> newTail = null;
-
-        for (Node<K, V> e = head; e != null; e = e.next) {
-            Node<K, V> n = new Node<>(e.hash, e.key, e.value, null);
-            if (newTail == null) {
-                newHead = n;
-            } else {
-                newTail.next = n;
-            }
-            newTail = n;
-        }
-        buckets[index] = newHead;
     }
 
     // -------------------- Red-Black Tree helpers (tree bins) --------------------
